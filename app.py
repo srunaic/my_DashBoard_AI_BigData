@@ -70,34 +70,37 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
             
         with col_side:
-            st.subheader("📊 Market Regime")
-            # Fetch Raw History for Regime Calc
-            # For simplicity, we can reuse the collector's history or fetch from DB.
-            # Let's fetch from DB for consistency if we had a full ingestion. 
-            # But the collector history is easier for the existing Class.
+            st.subheader("📊 Analysis & Alerts")
             
-            # Re-using collector for now to get the multi-asset dataframe for regime
+            # 1. Market Regime
             history_df = market_collector.fetch_historical_data(period="6mo")
-            
             if not history_df.empty:
                 from analysis.regime import MarketRegimeClassifier
                 classifier = MarketRegimeClassifier(history_df)
                 regime = classifier.classify_current_regime()
                 
-                # Dynamic Color
-                color = "green" if "Risk-On" in regime or "Inflation" in regime else "red"
+                regime_color = "green" if "Risk-On" in regime or "Inflation" in regime else "red"
                 st.markdown(f"""
-                <div style="padding: 20px; border-radius: 10px; background-color: {color}; color: white; text-align: center;">
-                    <h2>{regime}</h2>
+                <div style="margin-bottom: 20px; padding: 15px; border-radius: 8px; background-color: {regime_color}; color: white; text-align: center;">
+                    <div style="font-size: 0.8em; opacity: 0.8;">Market Regime</div>
+                    <div style="font-size: 1.2em; font-weight: bold;">{regime}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # 2. Valuation Alert (Z-Score)
+            from analysis.alerts import ValuationAlertSystem
+            val_system = ValuationAlertSystem(df_derived)
+            status = val_system.check_valuation_status()
+            
+            if status:
+                st.markdown(f"""
+                <div style="padding: 15px; border: 2px solid {status['color']}; border-radius: 8px; text-align: center;">
+                    <div style="color: {status['color']}; font-weight: bold;">{status['message']}</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">Z-Score: {status['z_score']:.2f} σ</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown("""
-                **Strategy Guide:**
-                - **Risk-On**: Focus on Equities.
-                - **Risk-Off**: Hold Gold/Cash.
-                - **Inflation Hedge**: Accumulate Gold.
-                """)
+            st.info("💡 **Tip**: Buy when Z-Score < -1.0")
 
     else:
         st.warning("No historical derived data found. Please run ingest pipeline.")

@@ -53,28 +53,44 @@ def ingest_market_data():
             price = row[symbol]
             if pd.isna(price):
                 continue
-                
-            # SQL Insert for market_data
-            sql = """
-            INSERT INTO market_data (date, symbol, close_price, volume)
-            VALUES (%s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE close_price = VALUES(close_price)
-            """
-            # Validating types
-            # yfinance tickers might be complex objects if not careful, but here they are column names (str)
             
-            val = (str(date_str), str(symbol), float(price), int(0))
+            # Map symbol to standard Raw Symbol Names
+            # yfinance names: "Gold", "Silver", "USD/KRW", etc. (from collector keys)
+            raw_symbol_map = {
+                "Gold": "GOLD_USD_OZ",
+                "Silver": "SILVER_USD_OZ",
+                "USD/KRW": "USDKRW",
+                "DXY": "DXY_INDEX",
+                "S&P 500": "SPX_INDEX",
+                "KOSPI": "KOSPI_INDEX"
+            }
+            db_symbol = raw_symbol_map.get(str(symbol), str(symbol))
+            
+            # Determine Unit
+            unit = "INDEX"
+            if "USD" in db_symbol: unit = "USD"
+            if "KRW" in db_symbol: unit = "KRW"
+            if "OZ" in db_symbol: unit = "USD/oz"
+            
+            # SQL Insert for macro_raw
+            sql = """
+            INSERT INTO macro_raw (date, symbol, value, unit, source)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE value = VALUES(value)
+            """
+            
+            val = (str(date_str), str(db_symbol), float(price), str(unit), "yfinance")
             
             try:
                 cursor.execute(sql, val)
                 records_inserted += 1
             except mysql.connector.Error as err:
-                print(f"Error inserting {symbol} at {date_str}: {err}")
+                print(f"Error inserting {db_symbol} at {date_str}: {err}")
 
     conn.commit()
     cursor.close()
     conn.close()
-    print(f"Market Data Ingestion Complete. {records_inserted} records inserted.")
+    print(f"Market Data Ingestion Complete. {records_inserted} records inserted into macro_raw.")
 
 def ingest_fred_data():
     print("Starting Macro Data Ingestion (FRED)...")
@@ -89,7 +105,6 @@ def ingest_fred_data():
     records_inserted = 0
 
     # Fetch logical series history
-    # We'll stick to the keys in collector.series_ids
     for name, series_id in collector.series_ids.items():
         try:
             print(f"Fetching {name} ({series_id})...")
@@ -101,18 +116,31 @@ def ingest_fred_data():
                 if pd.isna(value):
                     continue
 
+                # Standardize Names
+                db_symbol_map = {
+                    "CPI": "CPI_INDEX",
+                    "M2": "M2_SUPPLY",
+                    "US10Y": "US10Y_YIELD",
+                    "FedRate": "FED_RATE"
+                }
+                db_symbol = db_symbol_map.get(name, name)
+                
+                unit = "INDEX"
+                if "RATE" in db_symbol or "YIELD" in db_symbol: unit = "%"
+                if "M2" in db_symbol: unit = "USD_BILLIONS"
+
                 sql = """
-                INSERT INTO macro_indicators (date, indicator_name, value)
-                VALUES (%s, %s, %s)
+                INSERT INTO macro_raw (date, symbol, value, unit, source)
+                VALUES (%s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE value = VALUES(value)
                 """
-                val = (date_str, name, float(value))
+                val = (date_str, db_symbol, float(value), unit, "FRED")
                 
                 try:
                     cursor.execute(sql, val)
                     records_inserted += 1
                 except mysql.connector.Error as err:
-                    print(f"Error inserting {name} at {date_str}: {err}")
+                    print(f"Error inserting {db_symbol} at {date_str}: {err}")
                     
         except Exception as e:
             print(f"Failed to fetch/insert {name}: {e}")
@@ -120,7 +148,7 @@ def ingest_fred_data():
     conn.commit()
     cursor.close()
     conn.close()
-    print(f"Macro Data Ingestion Complete. {records_inserted} records inserted.")
+    print(f"Macro Data Ingestion Complete. {records_inserted} records inserted into macro_raw.")
 
 if __name__ == "__main__":
     ingest_market_data()
