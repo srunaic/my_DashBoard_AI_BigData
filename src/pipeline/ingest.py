@@ -138,17 +138,30 @@ def ingest_fred_data():
                 if "RATE" in db_symbol or "YIELD" in db_symbol: unit = "%"
                 if "M2" in db_symbol: unit = "USD_BILLIONS"
 
-                sql = """
-                INSERT INTO macro_raw (date, symbol, value, unit, source)
-                VALUES (%s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE value = VALUES(value)
-                """
-                val = (date_str, db_symbol, float(value), unit, "FRED")
+                # SQL Insert
+                # Detect DB Type
+                is_sqlite = isinstance(conn, sqlite3.Connection) if 'sqlite3' in sys.modules else False
+                
+                if is_sqlite:
+                    sql = """
+                    INSERT OR REPLACE INTO macro_raw (date, symbol, value, unit, source)
+                    VALUES (?, ?, ?, ?, ?)
+                    """
+                    val = (str(date_str), str(db_symbol), float(value), str(unit), "FRED")
+                else:
+                    sql = """
+                    INSERT INTO macro_raw (date, symbol, value, unit, source)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE value = VALUES(value)
+                    """
+                    val = (date_str, db_symbol, float(value), unit, "FRED")
                 
                 try:
                     cursor.execute(sql, val)
                     records_inserted += 1
                 except mysql.connector.Error as err:
+                    print(f"Error inserting {db_symbol} at {date_str}: {err}")
+                except sqlite3.Error as err:
                     print(f"Error inserting {db_symbol} at {date_str}: {err}")
                     
         except Exception as e:
@@ -171,18 +184,30 @@ def ingest_domestic_data():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        sql = """
-        INSERT INTO domestic_market_raw (date, price_type, value, unit, source)
-        VALUES (%s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE value = VALUES(value)
-        """
-        val = (data['date'], data['type'], data['value'], data['unit'], "MOCK_TEST")
+        # SQL Insert
+        is_sqlite = isinstance(conn, sqlite3.Connection) if 'sqlite3' in sys.modules else False
+        
+        if is_sqlite:
+            sql = """
+            INSERT OR REPLACE INTO domestic_market_raw (date, price_type, value, unit, source)
+            VALUES (?, ?, ?, ?, ?)
+            """
+            val = (str(data['date']), str(data['type']), float(data['value']), str(data['unit']), "MOCK_TEST")
+        else:
+            sql = """
+            INSERT INTO domestic_market_raw (date, price_type, value, unit, source)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE value = VALUES(value)
+            """
+            val = (data['date'], data['type'], data['value'], data['unit'], "MOCK_TEST")
         
         try:
             cursor.execute(sql, val)
             conn.commit()
             print(f"Domestic Data Ingested: {data['value']} KRW ({data['date']})")
         except mysql.connector.Error as err:
+            print(f"Error inserting domestic data: {err}")
+        except sqlite3.Error as err:
             print(f"Error inserting domestic data: {err}")
         finally:
             cursor.close()

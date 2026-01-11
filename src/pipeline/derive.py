@@ -44,8 +44,13 @@ def run_derivation():
     # Pivot to have columns: date, GOLD_USD_OZ, USDKRW
     df_pivot = df.pivot(index='date', columns='symbol', values='value').dropna()
     
+    # Ensure index is datetime (SQLite returns str)
+    df_pivot.index = pd.to_datetime(df_pivot.index)
+    
     derived_count = 0
     cursor = conn.cursor()
+    
+    is_sqlite = isinstance(conn, sqlite3.Connection) if 'sqlite3' in sys.modules else False
     
     for date, row in df_pivot.iterrows():
         gold_oz = row.get('GOLD_USD_OZ')
@@ -58,17 +63,26 @@ def run_derivation():
             date_str = date.strftime('%Y-%m-%d %H:%M:%S')
             metric_name = "GOLD_KRW_DON"
             
-            sql = """
-            INSERT INTO macro_derived (date, metric, value, calculation_version)
-            VALUES (%s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE value = VALUES(value)
-            """
-            val = (date_str, metric_name, float(gold_don_krw), "v1.0")
+            if is_sqlite:
+                sql = """
+                INSERT OR REPLACE INTO macro_derived (date, metric, value, calculation_version)
+                VALUES (?, ?, ?, ?)
+                """
+                val = (str(date_str), metric_name, float(gold_don_krw), "v1.0")
+            else:
+                sql = """
+                INSERT INTO macro_derived (date, metric, value, calculation_version)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE value = VALUES(value)
+                """
+                val = (date_str, metric_name, float(gold_don_krw), "v1.0")
             
             try:
                 cursor.execute(sql, val)
                 derived_count += 1
             except mysql.connector.Error as err:
+                print(f"Error inserting derived metric at {date_str}: {err}")
+            except sqlite3.Error as err:
                 print(f"Error inserting derived metric at {date_str}: {err}")
 
     conn.commit()
@@ -108,6 +122,7 @@ def run_premium_derivation():
 
     calculator = PremiumCalculator()
     inserted_count = 0
+    is_sqlite = isinstance(conn, sqlite3.Connection) if 'sqlite3' in sys.modules else False
     
     for _, row in df.iterrows():
         theo = row['theoretical']
@@ -117,18 +132,28 @@ def run_premium_derivation():
         result = calculator.calculate_premium(phys, theo)
         
         if result:
-            sql = """
-            INSERT INTO market_premium_derived 
-            (date, theoretical_price, physical_price, premium_amount, premium_rate)
-            VALUES (%s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE premium_rate = VALUES(premium_rate)
-            """
-            val = (date_str, float(theo), float(phys), float(result['amount']), float(result['rate']))
+            if is_sqlite:
+                sql = """
+                INSERT OR REPLACE INTO market_premium_derived 
+                (date, theoretical_price, physical_price, premium_amount, premium_rate)
+                VALUES (?, ?, ?, ?, ?)
+                """
+                val = (date_str, float(theo), float(phys), float(result['amount']), float(result['rate']))
+            else:
+                sql = """
+                INSERT INTO market_premium_derived 
+                (date, theoretical_price, physical_price, premium_amount, premium_rate)
+                VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE premium_rate = VALUES(premium_rate)
+                """
+                val = (date_str, float(theo), float(phys), float(result['amount']), float(result['rate']))
             
             try:
                 cursor.execute(sql, val)
                 inserted_count += 1
             except mysql.connector.Error as err:
+                print(f"Error inserting premium for {date_str}: {err}")
+            except sqlite3.Error as err:
                 print(f"Error inserting premium for {date_str}: {err}")
 
     conn.commit()

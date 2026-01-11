@@ -24,6 +24,12 @@ class DBConnector:
         Returns a raw database connection.
         Prioritizes MySQL. Falls back to SQLite if MySQL fails.
         """
+        # 0. Check for Forced SQLite Mode (for local population)
+        if os.getenv("FORCE_SQLITE", "false").lower() == "true":
+            print(f"🔹 FORCE_SQLITE mode active. Using: {self.sqlite_path}")
+            self.use_sqlite = True
+            return sqlite3.connect(self.sqlite_path)
+
         # 1. Try MySQL First
         try:
             conn = mysql.connector.connect(
