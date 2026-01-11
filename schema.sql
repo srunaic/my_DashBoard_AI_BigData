@@ -2,26 +2,24 @@ CREATE DATABASE IF NOT EXISTS dashboard_db;
 USE dashboard_db;
 
 -- 1. Raw Data Layer: Stores original data sources exactly as fetched
--- Intended for Auditability and Data Lake concept
 CREATE TABLE IF NOT EXISTS macro_raw (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date DATETIME NOT NULL,
-    symbol VARCHAR(50) NOT NULL,    -- GOLD_USD_OZ, SILVER_USD_OZ, USDKRW, CPI_INDEX, etc.
-    value DECIMAL(18, 6),           -- High precision for raw values
-    unit VARCHAR(20),               -- USD/oz, KRW, index, %
-    source VARCHAR(50),             -- yfinance, FRED
+    symbol VARCHAR(50) NOT NULL,
+    value DECIMAL(18, 6),
+    unit VARCHAR(20),
+    source VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_raw_entry (date, symbol)
 );
 
 -- 2. Derived Data Layer: Stores calculated business metrics
--- "Gold 1 Don (KRW)" lives here.
 CREATE TABLE IF NOT EXISTS macro_derived (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date DATETIME NOT NULL,
-    metric VARCHAR(50) NOT NULL,    -- GOLD_KRW_DON, SILVER_KRW_DON, REAL_GOLD_PRICE
-    value DECIMAL(18, 2),           -- Final values for display (usually currency)
-    calculation_version VARCHAR(20) DEFAULT 'v1.0', -- To track formula changes
+    metric VARCHAR(50) NOT NULL,
+    value DECIMAL(18, 2),
+    calculation_version VARCHAR(20) DEFAULT 'v1.0',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_derived_entry (date, metric)
 );
@@ -30,12 +28,34 @@ CREATE TABLE IF NOT EXISTS macro_derived (
 CREATE TABLE IF NOT EXISTS market_regime (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date DATE NOT NULL,
-    regime_type VARCHAR(50), -- Risk-On, Risk-Off
+    regime_type VARCHAR(50),
     confidence_score FLOAT,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Legacy tables - kept for reference or migration, but deprecating in favor of macro_raw/derived
--- market_data (Deprecated)
--- macro_indicators (Deprecated)
+-- PHASE 2 ADDITIONS ----------------------------------------
+
+-- 4. Domestic Market Raw (Physical Prices)
+CREATE TABLE IF NOT EXISTS domestic_market_raw (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date DATETIME NOT NULL,
+    price_type VARCHAR(20) NOT NULL, -- 'BUYing' (살때), 'SELLing' (팔때)
+    value DECIMAL(18, 2) NOT NULL,   -- Price in KRW per 3.75g (usually)
+    unit VARCHAR(20) DEFAULT 'KRW/3.75g',
+    source VARCHAR(50) DEFAULT 'KOREA_GOLD_EXCHANGE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_domestic_entry (date, price_type, source)
+);
+
+-- 5. Market Premium Derived (Distortion Analysis)
+CREATE TABLE IF NOT EXISTS market_premium_derived (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date DATETIME NOT NULL,
+    theoretical_price DECIMAL(18, 2), -- Calculated from Intl Spot * FX
+    physical_price DECIMAL(18, 2),    -- From domestic_market_raw
+    premium_amount DECIMAL(18, 2),    -- Physical - Theoretical
+    premium_rate FLOAT,               -- (Physical/Theoretical - 1) * 100
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_premium_entry (date)
+);

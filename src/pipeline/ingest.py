@@ -150,6 +150,38 @@ def ingest_fred_data():
     conn.close()
     print(f"Macro Data Ingestion Complete. {records_inserted} records inserted into macro_raw.")
 
+def ingest_domestic_data():
+    print("Starting Domestic Gold Data Ingestion...")
+    from src.modules.domestic_collector import DomesticGoldCollector
+    
+    collector = DomesticGoldCollector()
+    # Using Mock for now as agreed
+    data = collector.fetch_latest_mock()
+    
+    if data:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        sql = """
+        INSERT INTO domestic_market_raw (date, price_type, value, unit, source)
+        VALUES (%s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE value = VALUES(value)
+        """
+        val = (data['date'], data['type'], data['value'], data['unit'], "MOCK_TEST")
+        
+        try:
+            cursor.execute(sql, val)
+            conn.commit()
+            print(f"Domestic Data Ingested: {data['value']} KRW ({data['date']})")
+        except mysql.connector.Error as err:
+            print(f"Error inserting domestic data: {err}")
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        print("No domestic data fetched.")
+
 if __name__ == "__main__":
     ingest_market_data()
     ingest_fred_data()
+    ingest_domestic_data()

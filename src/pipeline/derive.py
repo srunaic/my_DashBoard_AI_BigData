@@ -79,5 +79,66 @@ def run_derivation():
     conn.close()
     print(f"Derivation Complete. {derived_count} metrics (Gold Don KRW) calculated and stored.")
 
+def run_premium_derivation():
+    print("Starting Premium Analysis (Theoretical vs Domestic)...")
+    # Import inside function or ensure path is present
+    from src.analysis.premium import PremiumCalculator
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Join macro_derived (Theoretical) and domestic_market_raw (Physical)
+    # matching on Date (roughly). Since domestic might be daily and derived might be daily, we join on DATE(date).
+    # Note: timestamp mismatch handling requires Date casting.
+    
+    query = """
+    SELECT 
+        DATE(t1.date) as date,
+        t1.value as theoretical,
+        t2.value as physical
+    FROM macro_derived t1
+    JOIN domestic_market_raw t2 ON DATE(t1.date) = DATE(t2.date)
+    WHERE t1.metric = 'GOLD_KRW_DON' AND t2.price_type = 'BUYing'
+    """
+    
+    df = pd.read_sql(query, conn)
+    
+    if df.empty:
+        print("No matching data found for Premium Calculation.")
+        # Setup mock derived data if missing, for the sake of the demo flow, 
+        # or simply return.
+        pass
+
+    calculator = PremiumCalculator()
+    inserted_count = 0
+    
+    for _, row in df.iterrows():
+        theo = row['theoretical']
+        phys = row['physical']
+        date_str = str(row['date'])
+        
+        result = calculator.calculate_premium(phys, theo)
+        
+        if result:
+            sql = """
+            INSERT INTO market_premium_derived 
+            (date, theoretical_price, physical_price, premium_amount, premium_rate)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE premium_rate = VALUES(premium_rate)
+            """
+            val = (date_str, float(theo), float(phys), float(result['amount']), float(result['rate']))
+            
+            try:
+                cursor.execute(sql, val)
+                inserted_count += 1
+            except mysql.connector.Error as err:
+                print(f"Error inserting premium for {date_str}: {err}")
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"Premium Derivation Complete. {inserted_count} records analysed.")
+
 if __name__ == "__main__":
     run_derivation()
+    run_premium_derivation()
