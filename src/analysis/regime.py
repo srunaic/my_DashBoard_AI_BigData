@@ -15,6 +15,9 @@ class MarketRegimeClassifier:
         # Get latest slice (last 5 days average to smooth noise)
         recent = self.df.tail(5).mean()
         
+        # Debugging: Check columns
+        # st.write(f"Debug Columns: {self.df.columns.tolist()}")
+
         # Needed Columns check
         required = ['Gold', 'DXY', 'S&P 500']
         for col in required:
@@ -22,13 +25,25 @@ class MarketRegimeClassifier:
                 return "Insufficient Data"
 
         # Calculate Trends (Prices vs 50-day Moving Average of the last available day)
-        # Note: self.df should contain computed MAs or we compute them here
         ma_50 = self.df.rolling(window=50).mean().iloc[-1]
         current = self.df.iloc[-1]
 
-        gold_trend = "UP" if current['Gold'] > ma_50['Gold'] else "DOWN"
-        dxy_trend = "UP" if current['DXY'] > ma_50['DXY'] else "DOWN"
-        spx_trend = "UP" if current['S&P 500'] > ma_50['S&P 500'] else "DOWN"
+        def get_scalar(series_or_scalar):
+            if isinstance(series_or_scalar, pd.Series):
+                return series_or_scalar.iloc[0]
+            return series_or_scalar
+
+        # Ensure scalars for comparison
+        curr_gold = get_scalar(current['Gold'])
+        ma50_gold = get_scalar(ma_50['Gold'])
+        curr_dxy = get_scalar(current['DXY'])
+        ma50_dxy = get_scalar(ma_50['DXY'])
+        curr_spx = get_scalar(current['S&P 500'])
+        ma50_spx = get_scalar(ma_50['S&P 500'])
+
+        gold_trend = "UP" if curr_gold > ma50_gold else "DOWN"
+        dxy_trend = "UP" if curr_dxy > ma50_dxy else "DOWN"
+        spx_trend = "UP" if curr_spx > ma50_spx else "DOWN"
         
         # Rule Engine Logic
         # 1. Risk-On: Stocks UP, DXY DOWN (usually), Gold (Variable, but usually stable/variable)

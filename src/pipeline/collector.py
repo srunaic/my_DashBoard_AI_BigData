@@ -38,10 +38,33 @@ class MarketDataCollector:
         for name, ticker in self.tickers.items():
             try:
                 df = yf.download(ticker, period=period, progress=False)
-                # Keep only Close prices for simplicity in this version
+                # Keep only Close prices for simplicity
                 if not df.empty:
-                    df = df[['Close']].rename(columns={'Close': name})
-                    data_frames[name] = df
+                    # Access 'Close' safely. 
+                    # If MultiIndex (Price, Ticker), we might need to handle it.
+                    if isinstance(df.columns, pd.MultiIndex):
+                        # Try to get 'Close' level
+                        try:
+                            df = df['Close']
+                        except KeyError:
+                            pass
+                    elif 'Close' in df.columns:
+                        df = df[['Close']]
+                        
+                    # Now df should be singular or contain the data we want.
+                    # If it's still a DataFrame with columns (e.g. tickers), take the first one?
+                    # Or just rename whatever is there.
+                    
+                    # Force rename of the column to the friendly name
+                    # If df is a Series, to_frame it
+                    if isinstance(df, pd.Series):
+                        df = df.to_frame()
+                    
+                    # If it has multiple columns (rare for single ticker download unless OHLCV), take the first one or specific
+                    if df.shape[1] >= 1:
+                        df = df.iloc[:, [0]] # Take first column (usually Close if we filtered)
+                        df.columns = [name]
+                        data_frames[name] = df
             except Exception as e:
                 print(f"Error fetching history for {name}: {e}")
         
