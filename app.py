@@ -102,8 +102,74 @@ def main():
                 
             st.info("💡 **Tip**: Buy when Z-Score < -1.0")
 
+                
+            st.info("💡 **Tip**: Buy when Z-Score < -1.0")
+
     else:
         st.warning("No historical derived data found. Please run ingest pipeline.")
+
+    st.markdown("---")
+    st.subheader("🔮 AI Price Forecast (30 Days)")
+    
+    if df_derived is not None and len(df_derived) > 30:
+        with st.spinner("Training AI Model (Prophet)..."):
+            from analysis.predictor import GoldPredictor
+            predictor = GoldPredictor(df_derived)
+            
+            if predictor.train():
+                forecast = predictor.predict(days=30)
+                metrics = predictor.get_forecast_metrics()
+                
+                # Show Metrics
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.metric("30-Day Forecast", f"₩{metrics['future_estimated']:,.0f}")
+                with m2:
+                    st.metric("Expected Change", f"{metrics['change_pct']:.2f}%", 
+                             delta_color="normal" if metrics['trend']=="UP" else "inverse")
+                with m3:
+                    st.caption("Model: Facebook Prophet")
+                    st.caption("Confidence: 95% Interval")
+
+                # Plot Forecast
+                # We use Plotly for interactive chart
+                # forecast has 'ds', 'yhat', 'yhat_lower', 'yhat_upper'
+                
+                fig_pred = px.line(forecast, x='ds', y='yhat', title="AI Predicted Trend")
+                
+                # Add Confidence Interval (Upper/Lower) as filled area?
+                # For simplicity in Streamlit standard chart, we might stick to line.
+                # Or filter for only future part to highlight it.
+                
+                # Highlight future
+                future_only = forecast[forecast['ds'] > df_derived['date'].max()]
+                
+                import plotly.graph_objects as go
+                fig_go = go.Figure()
+                
+                # Historical Data
+                fig_go.add_trace(go.Scatter(x=df_derived['date'], y=df_derived['value'], mode='lines', name='Actual History'))
+                
+                # Prediction
+                fig_go.add_trace(go.Scatter(x=future_only['ds'], y=future_only['yhat'], mode='lines', name='Predicted (AI)', line=dict(dash='dash', color='purple')))
+                
+                # Confidence Interval
+                fig_go.add_trace(go.Scatter(
+                    x=pd.concat([future_only['ds'], future_only['ds'][::-1]]),
+                    y=pd.concat([future_only['yhat_upper'], future_only['yhat_lower'][::-1]]),
+                    fill='toself',
+                    fillcolor='rgba(128, 0, 128, 0.2)',
+                    line=dict(color='rgba(255,255,255,0)'),
+                    name='Confidence Interval'
+                ))
+                
+                fig_go.update_layout(title="Gold Price Scenario (30 Days)", xaxis_title="Date", yaxis_title="Price (KRW)")
+                st.plotly_chart(fig_go, use_container_width=True)
+                
+            else:
+                st.error("Not enough data to train AI model (Need > 30 days).")
+    else:
+        st.info("Insufficient data for AI prediction. Need at least 30 historical data points.")
 
 if __name__ == "__main__":
     main()
