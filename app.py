@@ -15,15 +15,27 @@ import plotly.express as px
 
 def main():
     st.set_page_config(
-        page_title="Gold & Macro Decision System",
-        page_icon="🏦",
-        layout="wide"
+        page_title="금 시세 예측 및 거시경제 분석 AI (Gold Macro AI)",
+        page_icon="💰",
+        layout="wide",
+        initial_sidebar_state="expanded"
     )
     
     # --- Sidebar: Config & Disclaimer ---
     with st.sidebar:
         st.header("⚙️ Configuration")
         st.info("System Status: **Online**")
+        
+        # SEO / About Section
+        st.markdown("### ℹ️ 서비스 소개")
+        st.markdown("""
+        <div style='font-size: 0.9em; color: #444;'>
+        이 시스템은 <b>국제 금 시세(Gold Price)</b>, <b>원달러 환율(USD/KRW)</b>, 
+        <b>국내 실물 금 괴리율(Kimchi Premium)</b>을 실시간으로 분석합니다.<br><br>
+        <b>AI 모델(Prophet)</b>을 통해 향후 30일간의 가격 추세를 예측하고,
+        거시경제 위기 시그널을 탐지하여 제공합니다.
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
         st.warning("⚖️ **Disclaimer (법적 고지)**")
