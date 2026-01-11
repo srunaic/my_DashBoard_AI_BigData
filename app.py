@@ -19,8 +19,28 @@ def main():
         page_icon="🏦",
         layout="wide"
     )
+    
+    # --- Sidebar: Config & Disclaimer ---
+    with st.sidebar:
+        st.header("⚙️ Configuration")
+        st.info("System Status: **Online**")
+        
+        st.markdown("---")
+        st.warning("⚖️ **Disclaimer (법적 고지)**")
+        st.markdown("""
+        <div style='font-size: 0.8em; color: gray;'>
+        1. 본 서비스는 투자 판단의 참고 자료일 뿐이며, 모든 투자의 책임은 사용자 본인에게 있습니다.<br>
+        2. 제공되는 데이터(금 시세, 환율 등)는 외부 출처(Yahoo Finance, FRED 등) 지연 시세일 수 있습니다.<br>
+        3. '김치 프리미엄' 및 'AI 예측'은 단순 통계적/기계적 산출물로 미래 수익을 보장하지 않습니다.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        st.caption("Data Sources: Yahoo Finance, FRED, Korea Gold Exchange")
+        st.caption("Powered by: **Antigravity AI**")
 
     st.title("🏦 Enterprise Macro Analysis System")
+
     st.markdown("### 🥇 Standard: Gold 1 Don (3.75g)")
 
     # 1. Fetch Live Data for KPIs
