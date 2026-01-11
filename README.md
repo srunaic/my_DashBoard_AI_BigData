@@ -1,112 +1,123 @@
-# 🏦 AI & Big Data Macro-Economic Analysis System
-**(귀금속·화폐 가치 기반 거시경제 분석 및 의사결정 지원 시스템)**
+# 💰 Enterprise Macro Analysis System (AI & Big Data)
+> **"Real-World Decision Support System for Gold & Macro Economics"**
 
-An enterprise-grade dashboard that monitors **Gold, Silver, Currency Values (DXY, KRW), and Macro Indicators (CPI, Rates)** to determine market regimes (Risk-On/Off) and support management decisions.
+![Build Status](https://img.shields.io/github/actions/workflow/status/srunaic/my_DashBoard_AI_BigData/daily_ingest.yml?label=Data%20Pipeline)
+![Deployment](https://img.shields.io/github/actions/workflow/status/srunaic/my_DashBoard_AI_BigData/deploy_pages.yml?label=Landing%20Page)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+## 🌐 Live Service
+*   **Landing Page (Public)**: [https://srunaic.github.io/my_DashBoard_AI_BigData/](https://srunaic.github.io/my_DashBoard_AI_BigData/)
+*   **Dashboard App**: *(Connect your Streamlit Cloud URL here)*
+
+---
+
+## 📖 Project Overview
+This project is an **Enterprise-grade AI & Big Data Platform** designed to analyze macro-economic indicators (Gold, USD, Rates) and detect market crises.
+Unlike simple dashboards, this system features a **Dual-Layer Data Architecture (Raw/Derived)**, **AI-based Price Forecasting**, and **Real-World Market Distortion Analysis (Kimchi Premium)**.
+
+It is fully automated via **GitHub Actions** and deployed as a publicly searchable web service verified by **Google Search Console**.
+
+### 🏗️ System Architecture
+```mermaid
+graph LR
+    subgraph "External Sources"
+        A[Yahoo Finance] -->|Live Prices| D[Ingestion Pipeline]
+        B[FRED API] -->|Macro Indicators| D
+        C[Korea Gold Exchange] -->|Domestic Price| D
+    end
+
+    subgraph "Data Lake & Warehouse (MySQL)"
+        D -->|Raw Data| E[(macro_raw)]
+        D -->|Raw Data| F[(domestic_market_raw)]
+        E -->|ETL & Logic| G[(macro_derived)]
+        F -->|Premium Calc| H[(market_premium_derived)]
+    end
+
+    subgraph "Analytics Engine"
+        G -->|Rule-Based| I[Market Regime Classifier]
+        G -->|AI Model| J[Prophet Price Predictor]
+        H -->|Spread Analysis| K[Premium Calculator]
+    end
+
+    subgraph "User Interface"
+        I & J & K --> L[Streamlit Dashboard]
+        L --> M[Public Web Service]
+    end
+```
+
+---
 
 ## 🚀 Key Features
 
-### 1. Automated Data Pipeline (`src/pipeline`)
-- **Real-time Market Data**: Fetches Gold, Silver, S&P 500, DXY, USD/KRW using `yfinance`.
-- **Macro Economics**: Auto-fetches US CPI, M2 Money Supply, Interest Rates via `fredapi`.
-- **Robust Ingestion**: Type-safe ingestion into MySQL database with historical data support.
+### 1. 🤖 AI Price Prediction (Prophet)
+- Utilizes Facebook's **Prophet** time-series model.
+- Learns from 3+ years of historical Gold/USD data.
+- Generates a **30-day future price scenario** with 95% confidence intervals.
 
-### 2. Market Regime Analysis (`src/analysis/regime.py`)
-- **Rule-Based Classification**: Automatically detects market states:
-    - 🟢 **Risk-On (Growth)**: Stock Market Rally + Weak Dollar
-    - 🔴 **Risk-Off (Fear)**: Stock Drop + Strong Gold/Dollar
-    - 🛡️ **Inflation Hedge**: Rising Gold + Weak Dollar
-    - 📉 **Deflation**: Strong Dollar + Falling Assets
-- **Ambiguity Handling**: Robust logic to handle data outliers and scalar comparisons.
+### 2. 🌶️ Market Distortion Analysis (Kimchi Premium)
+- **Problem**: Domestic gold prices often deviate from international spot prices due to currency & demand shocks.
+- **Solution**: Real-time calculation of the "Premium Rate" (Domestic Retail vs. Theoretical Intl Price).
+- **Alerts**: Automatically flags "Overheating" (>5%) or "Discount" (<0%) market states.
 
-### 3. Financial Metrics (`src/analysis/calculators.py`)
-- **Real Gold Price**: Calibrated for inflation (CPI).
-- **Correlation Analysis**: Dynamic asset correlations (e.g., Gold vs. Interest Rates).
+### 3. 🛡️ Market Regime Classification
+- A rule-based engine that determines the current market state:
+    - 🟢 **Risk-On**: Safe to invest in equities.
+    - 🔴 **Risk-Off**: Warning signal (Strong Dollar/Gold).
+    - 📉 **Deflation**: Cash is king.
 
-### 4. Interactive Dashboard (`app.py`)
-- **KPI Cards**: Live price updates.
-- **Traffic Light System**: Instant visual feedback on Market Regime.
-- **Streamlit UI**: Clean, responsive interface for data exploration.
-
----
-
-## 🛠️ Technology Stack
-- **Language**: Python 3.10+
-- **Framework**: Streamlit
-- **Data Source**: Yahoo Finance, Federal Reserve Economic Data (FRED)
-- **Database**: MySQL (XAMPP/Local)
-- **Visualization**: Plotly, Streamlit Native Charts
-- **Infrastructure**: GitHub Actions (CI/CD)
+### 4. ⚙️ Automated Data Pipeline (ETL)
+- **Ingestion**: `ingest.py` runs daily via **GitHub Actions** (09:00 KST).
+- **Derivation**: `derive.py` standardizes units (oz -> 3.75g/Don) and calculates KPIs.
+- **Storage**: Cloud MySQL (Aiven/TiDB) ensures 24/7 availability.
 
 ---
 
-## ⚙️ How to Run Locally
-
-### 1. Prerequisites
-- Python 3.8+ installed
-- XAMPP (MySQL) running on Port 3306
-- FRED API Key fred
-
-### 2. Installation
-```bash
-# Clone the repository
-git clone https://github.com/srunaic/my_DashBoard_AI_BigData.git
-cd my_DashBoard_AI_BigData
-
-# Create Virtual Environment
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# Install Dependencies
-pip install -r requirements.txt
-```
-
-### 3. Configuration
-Create a `.env` file in the root directory:
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=dashboard_db
-FRED_API_KEY=your_api_key_here
-```
-
-### 4. Database Setup
-```bash
-# Run schema migration script
-python src/pipeline/setup_db.py
-
-# Ingest historical data
-python src/pipeline/ingest.py
-```
-
-### 5. Launch Dashboard
-```bash
-streamlit run app.py
-```
+## 🔒 Security & Compliance
+- **Credentials Management**: All API Keys (FRED, Database) are stored in **GitHub Secrets** and **Streamlit Secrets**. No sensitive keys are exposed in the code.
+- **SEO & Searchability**: 
+    - Verified domain ownership via **Google Search Console**.
+    - SEO-optimized Landing Page (`public/index.html`) for organic search traffic.
+- **Legal**: Mandatory financial disclaimers implemented in the dashboard.
 
 ---
 
-## 📊 Folder Structure
-```
-D:\Github\DashBoard_AI_BigData\
+## 📂 Repository Structure
+```bash
+├── .github/workflows/   # CI/CD Automation (Daily Ingest, Deploy Pages)
+├── public/              # Static Landing Page & SEO Verification
 ├── src/
-│   ├── analysis/       # Business Logic (Regime, Metrics)
-│   ├── modules/        # Utility Connectors (DB)
-│   ├── pipeline/       # Data Ingestion (Collector, Ingest)
-│   └── ui/             # Dashboard Views
-├── data/               # Local Data Cache
-├── .github/workflows/  # CI/CD Configuration
-├── app.py              # Main Entry Point
-├── schema.sql          # Database Schema
-└── requirements.txt    # Dependencies
+│   ├── analysis/        # AI Models, Calculators, Alerts
+│   ├── modules/         # DB Connectors, Data Loaders
+│   ├── pipeline/        # Ingest, Derive, ETL Scripts
+│   └── ui/              # Dashboard Components
+├── app.py               # Main Application Entry
+├── schema.sql           # Database Schema (DDL)
+└── requirements.txt     # Python Dependencies
 ```
 
-## 📅 Roadmap
-- [x] Data Pipeline Implementation
-- [x] Market Regime Classification
-- [ ] AI Trend Prediction (Prophet/LSTM)
-- [ ] Simulation Scenarios
-- [ ] User Alert System
+---
+
+## 💻 How to Run
+This system is cloud-native, but you can run it locally:
+
+1.  **Clone & Install**:
+    ```bash
+    git clone https://github.com/srunaic/my_DashBoard_AI_BigData.git
+    pip install -r requirements.txt
+    ```
+2.  **Configure Env**:
+    Create `.env` file with your keys (DB, FRED_API).
+3.  **Run Pipeline**:
+    ```bash
+    python src/pipeline/ingest.py
+    python src/pipeline/derive.py
+    ```
+4.  **Launch App**:
+    ```bash
+    streamlit run app.py
+    ```
 
 ---
-*Built for High-Level Decision Support.*
+*Developed by **Antigravity AI Team**.*
+*Copyright © 2026. All Rights Reserved.*
