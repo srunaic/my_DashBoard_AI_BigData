@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import mysql.connector
+import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
 
