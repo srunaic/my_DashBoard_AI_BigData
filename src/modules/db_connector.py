@@ -1,57 +1,57 @@
 import mysql.connector
-from sqlalchemy import create_engine
+import os
+import sqlite3
 import pandas as pd
-import streamlit as st
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class DBConnector:
-    def __init__(self, host="localhost", user="root", password="", port=3306, database=None):
-        self.host = host
-        self.user = user
-        self.password = password
-        self.port = port
-        self.database = database
-        self.engine = None
+    def __init__(self, host=None, user=None, password=None, database=None):
+        self.host = host or os.getenv("DB_HOST", "localhost")
+        self.user = user or os.getenv("DB_USER", "root")
+        self.password = password or os.getenv("DB_PASSWORD", "")
+        self.database = database or os.getenv("DB_NAME", "dashboard_db")
+        self.port = int(os.getenv("DB_PORT", 3306))
+        
+        # Determine connection mode
+        self.use_sqlite = False
+        # Path for the SQLite DB file (in the project root)
+        self.sqlite_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../dashboard.db"))
 
-    def connect(self):
-        """Establishes a connection to the database."""
+    def get_connection(self):
+        """
+        Returns a raw database connection.
+        Prioritizes MySQL. Falls back to SQLite if MySQL fails.
+        """
+        # 1. Try MySQL First
         try:
-            # Construct the connection string
-            # If database is not specified, we connect to the server only (useful for initial checks)
-            db_str = f"mysql+mysqlconnector://{self.user}:{self.password}@{self.host}:{self.port}"
-            if self.database:
-                db_str += f"/{self.database}"
-            
-            self.engine = create_engine(db_str)
-            # Test connection
-            with self.engine.connect() as connection:
-                pass
-            return True
+            conn = mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                database=self.database,
+                port=self.port,
+                connection_timeout=3
+            )
+            return conn
         except Exception as e:
-            st.error(f"Database connection failed: {e}")
-            return False
+            # 2. Fallback to SQLite
+            print(f"⚠️ MySQL Connection Failed: {e}")
+            print(f"🔄 Falling back to SQLite: {self.sqlite_path}")
+            self.use_sqlite = True
+            return sqlite3.connect(self.sqlite_path)
 
     def get_data(self, query):
-        """Executes a SQL query and returns a Pandas DataFrame."""
-        if not self.engine:
-            if not self.connect():
-                return None
-        
+        """
+        Executes a SELECT query and returns a Pandas DataFrame.
+        """
+        conn = self.get_connection()
         try:
-            return pd.read_sql(query, self.engine)
+            return pd.read_sql(query, conn)
         except Exception as e:
-            st.error(f"Query execution failed: {e}")
+            print(f"Error executing query: {e}")
             return None
-
-    def execute_query(self, query):
-        """Executes a SQL command (INSERT, UPDATE, DELETE)."""
-        if not self.engine:
-            if not self.connect():
-                return None
-            
-        try:
-            with self.engine.connect() as connection:
-                connection.execute(query)
-            return True
-        except Exception as e:
-            st.error(f"Execution failed: {e}")
-            return False
+        finally:
+            if conn:
+                conn.close()

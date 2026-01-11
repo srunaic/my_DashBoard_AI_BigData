@@ -18,13 +18,10 @@ DB_NAME = os.getenv("DB_NAME", "dashboard_db")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
 
 def get_db_connection():
-    return mysql.connector.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        port=DB_PORT
-    )
+    # Use the unified DBConnector to handle fallback
+    from src.modules.db_connector import DBConnector
+    connector = DBConnector()
+    return connector.get_connection()
 
 def ingest_market_data():
     print("Starting Market Data Ingestion...")
@@ -73,13 +70,24 @@ def ingest_market_data():
             if "OZ" in db_symbol: unit = "USD/oz"
             
             # SQL Insert for macro_raw
-            sql = """
-            INSERT INTO macro_raw (date, symbol, value, unit, source)
-            VALUES (%s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE value = VALUES(value)
-            """
+            # SQL Insert for macro_raw
+            # Detect DB Type
+            is_sqlite = isinstance(conn, sqlite3.Connection) if 'sqlite3' in sys.modules else False
             
-            val = (str(date_str), str(db_symbol), float(price), str(unit), "yfinance")
+            if is_sqlite:
+                sql = """
+                INSERT OR REPLACE INTO macro_raw (date, symbol, value, unit, source)
+                VALUES (?, ?, ?, ?, ?)
+                """
+                val = (str(date_str), str(db_symbol), float(price), str(unit), "yfinance")
+                # SQLite uses ? placeholder
+            else:
+                sql = """
+                INSERT INTO macro_raw (date, symbol, value, unit, source)
+                VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE value = VALUES(value)
+                """
+                val = (str(date_str), str(db_symbol), float(price), str(unit), "yfinance")
             
             try:
                 cursor.execute(sql, val)
