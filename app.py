@@ -6,6 +6,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
 from modules.db_connector import DBConnector
+from pipeline.collector import MarketDataCollector, FredDataCollector
+from ui.dashboard import render_dashboard
 
 def main():
     st.set_page_config(
@@ -35,11 +37,46 @@ def main():
     # Main Content Area
     st.write("Welcome to the dashboard. Select a module from the sidebar or configure your database connection.")
 
-    # Placeholder for future metrics
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Status", "Active")
-    col2.metric("Data Source", "Local MySQL")
-    col3.metric("System", "Ready")
+    # Main Content
+    st.write("### 📊 Market Overview")
+    
+    # 1. Fetch Data
+    market_collector = MarketDataCollector()
+    current_prices = market_collector.fetch_current_prices()
+    
+    # 2. Display KPI Cards
+    if current_prices:
+        cols = st.columns(len(current_prices))
+        for idx, (name, price) in enumerate(current_prices.items()):
+            with cols[idx]:
+                st.metric(label=name, value=f"{price:,.2f}" if price else "N/A")
+
+    # 3. Fetch Historical Data for Charts
+    history_df = market_collector.fetch_historical_data()
+    
+    # 4. Analysis & Insights
+    if not history_df.empty:
+        # Calculate Signals (Regime)
+        from analysis.regime import MarketRegimeClassifier
+        regime_classifier = MarketRegimeClassifier(history_df)
+        current_regime = regime_classifier.classify_current_regime()
+        
+        st.markdown(f"## 🚦 Market Regime: **{current_regime}**")
+        st.info("Regime is calculated based on Price Trends (Gold, SPX) and Currency Strength (DXY).")
+        
+        render_dashboard(history_df)
+
+    st.write("---")
+    st.write("### 🏦 Macro Indicators (FRED)")
+    
+    fred_collector = FredDataCollector()
+    indicators = fred_collector.fetch_latest_indicators()
+    
+    if indicators:
+        i_cols = st.columns(len(indicators))
+        for idx, (name, val) in enumerate(indicators.items()):
+            with i_cols[idx]:
+                st.metric(label=name, value=f"{val:,.2f}" if val else "N/A")
 
 if __name__ == "__main__":
     main()

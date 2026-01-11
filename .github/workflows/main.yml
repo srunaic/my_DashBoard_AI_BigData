@@ -46,7 +46,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    permission:
+    permissions:
       contents: read
       deployments: write
     steps:

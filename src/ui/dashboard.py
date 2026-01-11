@@ -20,5 +20,16 @@ def render_dashboard(data=None):
         return
 
     # If data is provided, try to render generic charts
-    st.write(f"Loaded {len(data)} rows.")
-    st.dataframe(data.head())
+    st.write(f"Loaded {len(data)} rows of market data.")
+    
+    # Line Chart for all assets (Normalized or Separate?)
+    # For now, just a raw line chart
+    st.subheader("Price History (1 Year)")
+    st.line_chart(data)
+    
+    # Correlation Heatmap
+    if len(data.columns) > 1:
+        st.subheader("Correlation Heatmap")
+        corr = data.corr()
+        fig = px.imshow(corr, text_auto=True, color_continuous_scale='RdBu_r')
+        st.plotly_chart(fig, use_container_width=True)

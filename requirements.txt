@@ -6,3 +6,5 @@ plotly
 mysql-connector-python
 sqlalchemy
 python-dotenv
+yfinance
+fredapi
