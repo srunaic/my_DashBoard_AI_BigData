@@ -44,7 +44,7 @@ An enterprise-grade dashboard that monitors **Gold, Silver, Currency Values (DXY
 ### 1. Prerequisites
 - Python 3.8+ installed
 - XAMPP (MySQL) running on Port 3306
-- FRED API Key (Get it from [fred.stlouisfed.org](https://fred.stlouisfed.org/docs/api/api_key.html))
+- FRED API Key fred
 
 ### 2. Installation
 ```bash
