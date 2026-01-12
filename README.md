@@ -117,7 +117,5 @@ This system is cloud-native, but you can run it locally:
     ```bash
     streamlit run app.py
     ```
-
----
-*Developed by **Antigravity AI Team**.*
+-develop team srunaic-
 *Copyright © 2026. All Rights Reserved.*
