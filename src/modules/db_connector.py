@@ -12,7 +12,9 @@ class DBConnector:
         self.user = user or os.getenv("DB_USER", "root")
         self.password = password or os.getenv("DB_PASSWORD", "")
         self.database = database or os.getenv("DB_NAME", "dashboard_db")
-        self.port = int(os.getenv("DB_PORT", 3306))
+        # Handle cases where DB_PORT is an empty string
+        env_port = os.getenv("DB_PORT")
+        self.port = int(env_port) if env_port and env_port.strip() else 3306
         
         # Determine connection mode
         self.use_sqlite = False

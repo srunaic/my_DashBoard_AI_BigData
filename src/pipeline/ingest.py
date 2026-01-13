@@ -16,7 +16,9 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "dashboard_db")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
+# Handle cases where DB_PORT is an empty string
+env_port = os.getenv("DB_PORT")
+DB_PORT = int(env_port) if env_port and env_port.strip() else 3306
 
 def get_db_connection():
     # Use the unified DBConnector to handle fallback
