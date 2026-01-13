@@ -13,7 +13,7 @@ def init_sqlite_db():
         os.remove(db_path)
         
     conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    cursor = conn.cursor() # Cursor for executing SQL commands
     
     print(f"Creating SQLite DB at {db_path}...")
     

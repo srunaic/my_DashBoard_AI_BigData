@@ -17,7 +17,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "dashboard_db")
 # Handle cases where DB_PORT is an empty string
 env_port = os.getenv("DB_PORT")
-DB_PORT = int(env_port) if env_port and env_port.strip() else 3306
+DB_PORT = int(env_port) if env_port and env_port.strip() else 3306 
+# exeption port number 3306 pipline error
 
 def get_db_connection():
     from src.modules.db_connector import DBConnector
