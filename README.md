@@ -2,12 +2,12 @@
 > **"Real-World Decision Support System for Gold & Macro Economics"**
 
 ![Build Status](https://img.shields.io/github/actions/workflow/status/srunaic/my_DashBoard_AI_BigData/daily_ingest.yml?label=Data%20Pipeline)
-![Deployment](https://img.shields.io/github/actions/workflow/status/srunaic/my_DashBoard_AI_BigData/deploy_pages.yml?label=Landing%20Page)
+![Cloudflare](https://img.shields.io/badge/Hosted%20on-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## 🌐 Live Service
-*   **Landing Page (Public)**: [https://srunaic.github.io/my_DashBoard_AI_BigData/](https://srunaic.github.io/my_DashBoard_AI_BigData/)
+*   **Landing Page (Hosted on Cloudflare Pages)**: `https://<your-project>.pages.dev` (Cloudflare Pages 도메인)
 *   **Dashboard App**: *(Connect your Streamlit Cloud URL here)*
 
 ---

@@ -34,6 +34,9 @@ env/
 # Environment Variables
 .env
 
-# Data
+# Data & Database
 data/*.csv
 data/*.xlsx
+*.db
+*.sqlite
+*.sqlite3
