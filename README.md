@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## 🌐 Live Service
-*   **Landing Page (Hosted on Cloudflare Pages)**: `https://<your-project>.pages.dev` (Cloudflare Pages 도메인)
+*   **my-dashboard-ai-bigdata.pages.dev**
 *   **Dashboard App**: *(Connect your Streamlit Cloud URL here)*
 
 ---
