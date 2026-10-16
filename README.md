@@ -11,8 +11,6 @@
 
 <h1><a href="https://my-dashboard-ai-bigdata.victoryka123.workers.dev/">RealTime 금 시세 가격 보러가기</a></h1>
 
-###**[👉 https://my-dashboard-ai-bigdata.victoryka123.workers.dev/ 👈](https://my-dashboard-ai-bigdata.victoryka123.workers.dev/)**
-
 </div>
 It is fully automated via **GitHub Actions** and deployed as a publicly searchable web service verified by **Google Search Console**.
 
