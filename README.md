@@ -5,14 +5,15 @@
 ![Cloudflare](https://img.shields.io/badge/Hosted%20on-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-
 ## 🌐 Live Service
-<h1><a href = "my-dashboard-ai-bigdata.victoryka123.workers.dev">RealTime금 시세 가격 보러가기</a> </h1>
 
-## 📖 Project Overview
-This project is an **Enterprise-grade AI & Big Data Platform** designed to analyze macro-economic indicators (Gold, USD, Rates) and detect market crises.
-Unlike simple dashboards, this system features a **Dual-Layer Data Architecture (Raw/Derived)**, **AI-based Price Forecasting**, and **Real-World Market Distortion Analysis (Kimchi Premium)**.
+<div align="center">
 
+<h1><a href="https://my-dashboard-ai-bigdata.victoryka123.workers.dev/">RealTime 금 시세 가격 보러가기</a></h1>
+
+###**[👉 https://my-dashboard-ai-bigdata.victoryka123.workers.dev/ 👈](https://my-dashboard-ai-bigdata.victoryka123.workers.dev/)**
+
+</div>
 It is fully automated via **GitHub Actions** and deployed as a publicly searchable web service verified by **Google Search Console**.
 
 ### 🏗️ System Architecture
