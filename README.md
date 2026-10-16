@@ -7,10 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## 🌐 Live Service
-<a>my-dashboard-ai-bigdata.pages.dev</a href>
-*   **Dashboard App**: *(Connect your Streamlit Cloud URL here)*
-
----
+<a>my-dashboard-ai-bigdata.victoryka123.workers.dev</a>
 
 ## 📖 Project Overview
 This project is an **Enterprise-grade AI & Big Data Platform** designed to analyze macro-economic indicators (Gold, USD, Rates) and detect market crises.
