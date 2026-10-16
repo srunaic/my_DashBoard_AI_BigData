@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## 🌐 Live Service
-<a>my-dashboard-ai-bigdata.victoryka123.workers.dev</a>
+<a href = "my-dashboard-ai-bigdata.victoryka123.workers.dev"><h1>RealTime금 시세 가격 보러가기</h1></a>
 
 ## 📖 Project Overview
 This project is an **Enterprise-grade AI & Big Data Platform** designed to analyze macro-economic indicators (Gold, USD, Rates) and detect market crises.
